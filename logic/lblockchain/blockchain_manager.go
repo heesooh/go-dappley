@@ -180,6 +180,15 @@ func (bm *BlockchainManager) Push(blk *block.Block, pid networkmodel.PeerInfo) {
 	}
 
 	bm.blockPool.AddBlock(blk)
+	if bm.Getblockchain().GetTailBlockHash().String() ==  blk.GetPrevHash().String() {
+		var blocks []*block.Block
+		blocks = append(blocks, blk)
+		err := bm.AddBlock(blocks, blk.GetPrevHash())
+		if err != nil {
+			logger.Warn("add block failed.err:", err)
+		}
+		return
+	}
 	forkHeadBlk := bm.blockPool.GetForkHead(blk)
 	if forkHeadBlk == nil {
 		return
@@ -220,6 +229,44 @@ func (bm *BlockchainManager) Push(blk *block.Block, pid networkmodel.PeerInfo) {
 	logger.Info("Push: set blockchain status to ready.")
 	bm.Getblockchain().mutex.Unlock()
 	return
+}
+
+func (bm *BlockchainManager) AddBlock(forkBlks []*block.Block, forkParentHash hash.Hash) error {
+	//find parent block
+	if len(forkBlks) == 0 {
+		return nil
+	}
+	forkHeadBlock := forkBlks[len(forkBlks)-1]
+	if forkHeadBlock == nil {
+		return nil
+	}
+	//verify transactions in the fork
+	utxo, scState, err := RevertUtxoAndScStateAtBlockHash(bm.blockchain.GetDb(), bm.blockchain, forkParentHash)
+	if err != nil {
+		logger.Error("BlockchainManager: blockchain is corrupted! Delete the database file and resynchronize to the network.")
+		return err
+	}
+
+	parentBlk, err := bm.blockchain.GetBlockByHash(forkParentHash)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"error": err,
+			"hash":  forkParentHash.String(),
+		}).Error("BlockchainManager: get fork parent block failed.")
+	}
+	if !lblock.VerifyTransactions(forkBlks[0], utxo, scState, parentBlk) {
+		return ErrTransactionVerifyFailed
+	}
+
+	ctx := BlockContext{Block: forkBlks[0], UtxoIndex: utxo, State: scState}
+	err = bm.blockchain.AddBlockContextToTail(&ctx)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"error":  err,
+			"height": forkBlks[0].GetHeight(),
+		}).Error("BlockchainManager: add fork to tail failed.")
+	}
+	return nil
 }
 
 func (bm *BlockchainManager) MergeFork(forkBlks []*block.Block, forkParentHash hash.Hash) error {
