@@ -1,0 +1,96 @@
+go clean -testcache
+for f in ./*/; do \
+		if [ "$f" != "./bin/" -a  "$f" != "./vendor/" ]; then \
+			cd $f; go test -tags=integration ./... ; cd ..; \
+		fi \
+	done
+ok  	github.com/dappley/go-dappley/common	0.404s
+ok  	github.com/dappley/go-dappley/common/deadline	0.331s
+ok  	github.com/dappley/go-dappley/common/hash	0.536s
+?   	github.com/dappley/go-dappley/common/log	[no test files]
+ok  	github.com/dappley/go-dappley/common/pubsub	0.612s
+?   	github.com/dappley/go-dappley/common/pubsub/mocks	[no test files]
+ok  	github.com/dappley/go-dappley/common/sorted	0.160s
+FAIL	github.com/dappley/go-dappley/common/trie [build failed]
+?   	github.com/dappley/go-dappley/common/trie/pb	[no test files]
+FAIL
+ok  	github.com/dappley/go-dappley/config	0.163s
+?   	github.com/dappley/go-dappley/config/pb	[no test files]
+ok  	github.com/dappley/go-dappley/consensus	0.237s
+?   	github.com/dappley/go-dappley/core	[no test files]
+ok  	github.com/dappley/go-dappley/core/account	0.257s
+?   	github.com/dappley/go-dappley/core/account/pb	[no test files]
+ok  	github.com/dappley/go-dappley/core/block	0.538s
+?   	github.com/dappley/go-dappley/core/block/pb	[no test files]
+ok  	github.com/dappley/go-dappley/core/blockchain	0.365s
+ok  	github.com/dappley/go-dappley/core/blockproducerinfo	0.668s
+ok  	github.com/dappley/go-dappley/core/scState	2.208s
+?   	github.com/dappley/go-dappley/core/scState/pb	[no test files]
+?   	github.com/dappley/go-dappley/core/test	[no test files]
+ok  	github.com/dappley/go-dappley/core/transaction	0.222s
+?   	github.com/dappley/go-dappley/core/transaction/pb	[no test files]
+ok  	github.com/dappley/go-dappley/core/transactionbase	0.333s
+?   	github.com/dappley/go-dappley/core/transactionbase/pb	[no test files]
+?   	github.com/dappley/go-dappley/core/utxo	[no test files]
+?   	github.com/dappley/go-dappley/core/utxo/pb	[no test files]
+--- FAIL: TestSecp256k1Sign (0.00s)
+    --- FAIL: TestSecp256k1Sign/invalid_private_key (0.00s)
+        crypto_unit_test.go:355: 
+            	Error Trace:	crypto_unit_test.go:355
+            	Error:      	Should NOT be empty, but was []
+            	Test:       	TestSecp256k1Sign/invalid_private_key
+        crypto_unit_test.go:356: 
+            	Error Trace:	crypto_unit_test.go:356
+            	Error:      	Expected nil, but got: &errors.errorString{s:"invalid private key"}
+            	Test:       	TestSecp256k1Sign/invalid_private_key
+FAIL
+FAIL	github.com/dappley/go-dappley/crypto	0.227s
+ok  	github.com/dappley/go-dappley/crypto/byteutils	0.338s
+ok  	github.com/dappley/go-dappley/crypto/cipher	0.274s
+ok  	github.com/dappley/go-dappley/crypto/hash	0.254s
+?   	github.com/dappley/go-dappley/crypto/keystore	[no test files]
+FAIL	github.com/dappley/go-dappley/crypto/keystore/secp256k1 [build failed]
+?   	github.com/dappley/go-dappley/crypto/keystore/secp256k1/bitelliptic	[no test files]
+ok  	github.com/dappley/go-dappley/crypto/keystore/secp256k1/vrf	0.201s
+ok  	github.com/dappley/go-dappley/crypto/keystore/secp256k1/vrf/secp256k1VRF	11.702s
+ok  	github.com/dappley/go-dappley/crypto/keystore/test	1.795s
+ok  	github.com/dappley/go-dappley/crypto/sha3	0.512s
+?   	github.com/dappley/go-dappley/crypto/utils	[no test files]
+FAIL
+?   	github.com/dappley/go-dappley/dapp	[no test files]
+?   	github.com/dappley/go-dappley/dapp/cli	[no test files]
+ok  	github.com/dappley/go-dappley/intergationTest	70.047s
+ok  	github.com/dappley/go-dappley/logic	6.937s
+?   	github.com/dappley/go-dappley/logic/blockproducer	[no test files]
+?   	github.com/dappley/go-dappley/logic/blockproducer/mocks	[no test files]
+ok  	github.com/dappley/go-dappley/logic/downloadmanager	26.296s
+ok  	github.com/dappley/go-dappley/logic/lblock	0.490s
+ok  	github.com/dappley/go-dappley/logic/lblockchain	0.801s
+?   	github.com/dappley/go-dappley/logic/lblockchain/mocks	[no test files]
+?   	github.com/dappley/go-dappley/logic/lblockchain/pb	[no test files]
+ok  	github.com/dappley/go-dappley/logic/ltransaction	0.877s
+ok  	github.com/dappley/go-dappley/logic/lutxo	1.229s
+ok  	github.com/dappley/go-dappley/logic/transactionpool	0.345s
+ok  	github.com/dappley/go-dappley/metrics	10.267s
+?   	github.com/dappley/go-dappley/metrics/logMetrics	[no test files]
+?   	github.com/dappley/go-dappley/metrics/pb	[no test files]
+ok  	github.com/dappley/go-dappley/network	18.484s
+ok  	github.com/dappley/go-dappley/network/networkmodel	0.264s
+?   	github.com/dappley/go-dappley/network/pb	[no test files]
+ok  	github.com/dappley/go-dappley/rpc	30.450s
+?   	github.com/dappley/go-dappley/rpc/pb	[no test files]
+?   	github.com/dappley/go-dappley/sdk	[no test files]
+FAIL	github.com/dappley/go-dappley/storage [build failed]
+?   	github.com/dappley/go-dappley/storage/mock	[no test files]
+?   	github.com/dappley/go-dappley/storage/mocks	[no test files]
+FAIL
+?   	github.com/dappley/go-dappley/tool/block_generator	[no test files]
+?   	github.com/dappley/go-dappley/tool/block_generator/benchmark_tool	[no test files]
+?   	github.com/dappley/go-dappley/tool/block_generator/src	[no test files]
+?   	github.com/dappley/go-dappley/tool/db_inspect	[no test files]
+?   	github.com/dappley/go-dappley/tool/db_inspect/pb	[no test files]
+ok  	github.com/dappley/go-dappley/tool/utxo_data_tranfer	0.213s
+ok  	github.com/dappley/go-dappley/util	0.161s
+ok  	github.com/dappley/go-dappley/vm	0.586s
+ok  	github.com/dappley/go-dappley/wallet	12.498s
+?   	github.com/dappley/go-dappley/wallet/pb	[no test files]
