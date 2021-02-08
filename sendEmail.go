@@ -8,26 +8,25 @@ import (
 	"flag"
 )
 
-	// commit hash number
-	// commit date 
-	// commit message
-	// name of the person who commited
-
 func main() {
-	var filename string
-	flag.StringVar(&filename, "filename", "default.txt", "default txt file")
+	var fileName string
+	var commitInfo string
+	var commitEmail string
+	flag.StringVar(&fileName, "fileName", "default.txt", "default txt file")
+	flag.StringVar(&commitInfo, "commitInfo", "default info", "default commit info")
+	flag.StringVar(&commitEmail, "commitEmail", "default email", "default commit email")
 	flag.Parse()
-	sendEmail(filename)
+	sendEmail(fileName, commitInfo, commitEmail)
 }
 
-func sendEmail(filename string) {
-	errMSG, err := ioutil.ReadFile(filename)
+func sendEmail(fileName string, commitInfo string, commitEmail string) {
+	errMSG, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return
 	}
 	ERROR := string(errMSG)
 	if (strings.Contains(ERROR, "FAIL")) {
-		errorEmail := "<p> Failing Tests: </p>"
+		errorEmail := commitInfo + commitEmail + "<p> Failing Tests: </p>"
 		scanner := bufio.NewScanner(strings.NewReader(ERROR))
 		for scanner.Scan() {
 			MSG := scanner.Text()
@@ -42,7 +41,7 @@ func sendEmail(filename string) {
 		//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 		m.SetHeader("Subject", "Dappley Error Report:")
 		m.SetBody("text/html", errorEmail)
-		m.Attach(filename)
+		m.Attach(fileName)
 
 		d := gomail.NewDialer("smtp.gmail.com", 587, "blockchainwarning@omnisolu.com", "01353751")
 
