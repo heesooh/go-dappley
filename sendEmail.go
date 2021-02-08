@@ -36,14 +36,14 @@ func sendEmail(fileName string, commitInfo string, commitEmail string) {
 
 	if (strings.Contains(ERROR, "FAIL")) {
 		//create the html formatted email
-		errorEmail := "<p> Failing Tests:"
+		errorEmail := "<p>"
 		CommitScanner := bufio.NewScanner(strings.NewReader(COMMIT))
 		for CommitScanner.Scan() {
 			MSG := CommitScanner.Text()
 			MSG = "<br>" + MSG
 			errorEmail += MSG
 		}
-		errorEmail += "</p> <p>"
+		errorEmail += "</p> <p>Failing Tests:"
 		ErrorScanner := bufio.NewScanner(strings.NewReader(ERROR))
 		for ErrorScanner.Scan() {
 			MSG := ErrorScanner.Text()
