@@ -56,7 +56,7 @@ func sendEmail(fileName string, commitInfo string, commitEmail string) {
 		//send the email
 		m := gomail.NewMessage()
 		m.SetHeader("From", "blockchainwarning@omnisolu.com")
-		m.SetHeader("To", "blockchainwarning@omnisolu.com")
+		m.SetHeader("To", commitEmail)
 		//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 		m.SetHeader("Subject", "go-dappley Error Report:")
 		m.SetBody("text/html", errorEmail)
