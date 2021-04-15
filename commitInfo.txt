@@ -1,7 +1,0 @@
-commit eee371c644827f2e2e1dc5df649bd94f22a905e3
-Author:     Heesoo Hwang <heesoohwang1231@gmail.com>
-AuthorDate: Thu Apr 15 15:50:28 2021 -0700
-Commit:     Heesoo Hwang <heesoohwang1231@gmail.com>
-CommitDate: Thu Apr 15 15:50:28 2021 -0700
-
-    Test
