@@ -9,17 +9,18 @@ import (
 )
 
 func main() {
-	var fileName string
-	var commitInfo string
-	var commitEmail string
-	flag.StringVar(&fileName, "fileName", "default.txt", "default txt file")
-	flag.StringVar(&commitInfo, "commitInfo", "default info", "default commit info")
-	flag.StringVar(&commitEmail, "commitEmail", "default email", "default commit email")
+	var fileName, commitInfo, commitEmail, senderEmail, senderPasswd string
+	flag.StringVar(&fileName,     "fileName",     "log.txt",         "Test result file")
+	flag.StringVar(&commitInfo,   "commitInfo",   "commit info",     "default commit info")
+	flag.StringVar(&commitEmail,  "commitEmail",  "committer email", "default commit email")
+	flag.StringVar(&senderEmail,  "senderEmail",  "sender_username@example.com", "Email address of the sender")
+	flag.StringVar(&senderPasswd, "senderPasswd", "PASSWORD",        "Password of the sender's email address.")
 	flag.Parse()
-	sendEmail(fileName, commitInfo, commitEmail)
+
+	sendEmail(fileName, commitInfo, commitEmail, senderEmail, senderPasswd)
 }
 
-func sendEmail(fileName string, commitInfo string, commitEmail string) {
+func sendEmail(fileName string, commitInfo string, commitEmail string, senderEmail string, senderPasswd string) {
 	//read log file
 	errMSG, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -55,7 +56,7 @@ func sendEmail(fileName string, commitInfo string, commitEmail string) {
 		errorEmail += "</p>"
 		//send the email
 		m := gomail.NewMessage()
-		m.SetHeader("From", "blockchainwarning@omnisolu.com")
+		m.SetHeader("From", senderEmail)
 		m.SetHeader("To", commitEmail)
 		//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
 		m.SetHeader("Subject", "go-dappley Error Report:")
@@ -63,7 +64,7 @@ func sendEmail(fileName string, commitInfo string, commitEmail string) {
 		m.Attach(fileName)
 		m.Attach("change.txt")
 
-		d := gomail.NewDialer("smtp.gmail.com", 587, "blockchainwarning@omnisolu.com", "feqkop-6rykvu-Dyqter")
+		d := gomail.NewDialer("smtp.gmail.com", 587, senderEmail, senderPasswd)
 
 		if err := d.DialAndSend(m); err != nil {
 			panic(err)
