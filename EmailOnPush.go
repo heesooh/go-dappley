@@ -128,5 +128,3 @@ func send(emailBody string, change string, testResult string, committer string, 
 		panic(err)
 	}
 }
-
-//
