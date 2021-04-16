@@ -10,38 +10,39 @@ import (
 )
 
 func main() {
-	var change, testResult, commitInfo, committer, sender, senderPasswd string
+	var change, testResult, commitInfo, sender, senderPasswd string
 	flag.StringVar(&change,       "change",       "change.txt",        "Changes made in the new commit")
 	flag.StringVar(&testResult,   "testResult",   "log.txt",           "Test result file")
 	flag.StringVar(&commitInfo,   "commitInfo",   "commit info",       "default commit info")
-	flag.StringVar(&committer,    "committer",    "committer's email", "default commit email")
 	flag.StringVar(&sender,       "sender",       "sender_username@example.com", "Email address of the sender")
 	flag.StringVar(&senderPasswd, "senderPasswd", "PASSWORD",          "Password of the sender's email address.")
 	flag.Parse()
 
-	email, fail_exists := compose(testResult, commitInfo)
+	committer, emailContent, fail_exists := compose(testResult, commitInfo)
 	if fail_exists {
-		send(email, change, testResult, committer, sender, senderPasswd)
+		send(emailContent, change, testResult, committer, sender, senderPasswd)
+		fmt.Println("Email sent to committer:", committer)
 	} else {
 		fmt.Println("ALL TESTS PASSED!")
 	}
 }
 
-func compose(testResult string, commitInfo string) (string, bool){
+func compose(testResult string, commitInfo string) (string, string, bool){
+	var committer string
 	sendEmail := false
 
 	//read log file
 	testMSG_byte, err := ioutil.ReadFile(testResult)
 	if err != nil {
 		fmt.Printf("Failed to read file \"%s\"", testResult)
-		return "", sendEmail
+		return "", "", sendEmail
 	}
 
 	//read commitInfo file
 	commitMSG_byte, err := ioutil.ReadFile(commitInfo)
 	if err != nil {
 		fmt.Printf("Failed to read file \"%s\"", commitInfo)
-		return "", sendEmail
+		return "", "", sendEmail
 	}
 
 	//convert to string
@@ -61,6 +62,9 @@ func compose(testResult string, commitInfo string) (string, bool){
 			continue
 		} else {
 			if strings.Contains(MSG, "<") {
+				if strings.Contains(MSG, "Commit:") {
+					committer = between(MSG, "<", ">")
+				}
 				MSG = strings.Replace(MSG, "<", "", -1)
 				MSG = strings.Replace(MSG, ">", "", -1)
 			}
@@ -87,7 +91,24 @@ func compose(testResult string, commitInfo string) (string, bool){
 	//Merge both sections together
 	emailContents := emailContents_commit + emailContents_testInfo
 
-	return emailContents, sendEmail
+	return committer, emailContents, sendEmail
+}
+
+func between(value string, a string, b string) string {
+    // Get substring between two strings.
+    posFirst := strings.Index(value, a)
+    if posFirst == -1 {
+        return ""
+    }
+    posLast := strings.Index(value, b)
+    if posLast == -1 {
+        return ""
+    }
+    posFirstAdjusted := posFirst + len(a)
+    if posFirstAdjusted >= posLast {
+        return ""
+    }
+    return value[posFirstAdjusted:posLast]
 }
 
 func send(emailBody string, change string, testResult string, committer string, sender string, senderPasswd string) {
