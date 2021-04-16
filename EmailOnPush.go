@@ -6,68 +6,104 @@ import (
 	"strings"
 	"bufio"
 	"flag"
+	"fmt"
 )
 
 func main() {
-	var fileName, commitInfo, commitEmail, senderEmail, senderPasswd string
-	flag.StringVar(&fileName,     "fileName",     "log.txt",         "Test result file")
-	flag.StringVar(&commitInfo,   "commitInfo",   "commit info",     "default commit info")
-	flag.StringVar(&commitEmail,  "commitEmail",  "committer email", "default commit email")
-	flag.StringVar(&senderEmail,  "senderEmail",  "sender_username@example.com", "Email address of the sender")
-	flag.StringVar(&senderPasswd, "senderPasswd", "PASSWORD",        "Password of the sender's email address.")
+	var change, testResult, commitInfo, committer, sender, senderPasswd string
+	flag.StringVar(&change,       "change",       "change.txt",        "Changes made in the new commit")
+	flag.StringVar(&testResult,   "testResult",   "log.txt",           "Test result file")
+	flag.StringVar(&commitInfo,   "commitInfo",   "commit info",       "default commit info")
+	flag.StringVar(&committer,    "committer",    "committer's email", "default commit email")
+	flag.StringVar(&sender,       "sender",       "sender_username@example.com", "Email address of the sender")
+	flag.StringVar(&senderPasswd, "senderPasswd", "PASSWORD",          "Password of the sender's email address.")
 	flag.Parse()
 
-	sendEmail(fileName, commitInfo, commitEmail, senderEmail, senderPasswd)
+	email, fail_exists := compose(testResult, commitInfo)
+	if fail_exists {
+		send(email, change, testResult, committer, sender, senderPasswd)
+	} else {
+		fmt.Println("ALL TESTS PASSED!")
+	}
 }
 
-func sendEmail(fileName string, commitInfo string, commitEmail string, senderEmail string, senderPasswd string) {
-	//read log file
-	errMSG, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return
-	}
-	//read commitInfo file
-	commitMSG, err := ioutil.ReadFile(commitInfo)
-	if err != nil {
-		return
-	}
-	//convert to string
-	ERROR := string(errMSG)
-	COMMIT := string(commitMSG)
+func compose(testResult string, commitInfo string) (string, bool){
+	sendEmail := false
 
-	if (strings.Contains(ERROR, "FAIL")) {
-		//create the html formatted email
-		errorEmail := "<p>"
-		CommitScanner := bufio.NewScanner(strings.NewReader(COMMIT))
-		for CommitScanner.Scan() {
-			MSG := CommitScanner.Text()
+	//read log file
+	testMSG_byte, err := ioutil.ReadFile(testResult)
+	if err != nil {
+		fmt.Printf("Failed to read file \"%s\"", testResult)
+		return "", sendEmail
+	}
+
+	//read commitInfo file
+	commitMSG_byte, err := ioutil.ReadFile(commitInfo)
+	if err != nil {
+		fmt.Printf("Failed to read file \"%s\"", commitInfo)
+		return "", sendEmail
+	}
+
+	//convert to string
+	testMSG   := string(testMSG_byte)
+	commitMSG := string(commitMSG_byte)
+
+	emailContents_commit   := "<p>Committer Information:"
+	emailContents_testInfo := "<p>Failing Tests Information:"
+
+	//Compose the commit information section of the email
+	commitMsgScanner := bufio.NewScanner(strings.NewReader(commitMSG))
+	for i := 0; commitMsgScanner.Scan(); i++ {
+		MSG := commitMsgScanner.Text()
+		if i == 6 {
+			MSG = "<br> Commit Summary: " + MSG
+		} else if MSG == "" {
+			continue
+		} else {
+			if strings.Contains(MSG, "<") {
+				MSG = strings.Replace(MSG, "<", "", -1)
+				MSG = strings.Replace(MSG, ">", "", -1)
+			}
 			MSG = "<br>" + MSG
-			errorEmail += MSG
 		}
-		errorEmail += "</p> <p>Failing Tests:"
-		ErrorScanner := bufio.NewScanner(strings.NewReader(ERROR))
-		for ErrorScanner.Scan() {
-			MSG := ErrorScanner.Text()
-			if (strings.Contains(MSG, "FAIL")) {
+		emailContents_commit += MSG
+	}
+	emailContents_commit += "</p>"
+
+	//Compose the test result information section of the email
+	testMsgScanner := bufio.NewScanner(strings.NewReader(testMSG))
+	for testMsgScanner.Scan() {
+		MSG := testMsgScanner.Text()
+		if (strings.Contains(MSG, "FAIL")) {
+			if (strings.TrimLeft(MSG, "FAIL") != "") {
+				sendEmail = true
 				MSG = "<br>" + MSG
-				errorEmail += MSG
+				emailContents_testInfo += MSG
 			}
 		}
-		errorEmail += "</p>"
-		//send the email
-		m := gomail.NewMessage()
-		m.SetHeader("From", senderEmail)
-		m.SetHeader("To", commitEmail)
-		//m.SetAddressHeader("Cc", "dan@example.com", "Dan")
-		m.SetHeader("Subject", "go-dappley Error Report:")
-		m.SetBody("text/html", errorEmail)
-		m.Attach(fileName)
-		m.Attach("change.txt")
+	}
+	emailContents_testInfo += "</p>"
 
-		d := gomail.NewDialer("smtp.gmail.com", 587, senderEmail, senderPasswd)
+	//Merge both sections together
+	emailContents := emailContents_commit + emailContents_testInfo
 
-		if err := d.DialAndSend(m); err != nil {
-			panic(err)
-		}
+	return emailContents, sendEmail
+}
+
+func send(emailBody string, change string, testResult string, committer string, sender string, senderPasswd string) {
+	//send the email
+	mail := gomail.NewMessage()
+	mail.SetHeader("From", sender)
+	mail.SetHeader("To",   committer)
+	//mail.SetAddressHeader("Cc", "dan@example.com", "Dan")
+	mail.SetHeader("Subject", "Go-Dappley Commit Test Result")
+	mail.SetBody("text/html", emailBody)
+	mail.Attach(change)
+	mail.Attach(testResult)
+
+	deliver := gomail.NewDialer("smtp.gmail.com", 587, sender, senderPasswd)
+
+	if err := deliver.DialAndSend(mail); err != nil {
+		panic(err)
 	}
 }
