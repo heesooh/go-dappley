@@ -15,12 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with the go-dappley library.  If not, see <http://www.gnu.org/licenses/>.
 //
-//
 
 package main
 
 import (
 	"flag"
+
 	"github.com/dappley/go-dappley/core/transaction"
 
 	"github.com/dappley/go-dappley/core/blockchain"
@@ -56,8 +56,11 @@ const (
 	genesisAddr     = "121yKAXeG4cw6uaGCBYjWk9yTWmMkhcoDD"
 	configFilePath  = "conf/default.conf"
 	genesisFilePath = "conf/genesis.conf"
+	peerFilePath    = "conf/peer.conf"
+	peerConfDirPath = "../dapp/"
 	defaultPassword = "password"
 	size1kB         = 1024
+	version         = "v0.4.1"
 )
 
 func main() {
@@ -76,9 +79,22 @@ func main() {
 
 	var genesisPath string
 	flag.StringVar(&genesisPath, "g", genesisFilePath, "Genesis Configuration File Path. Default to conf/genesis.conf")
+	//flag.Parse()
+
+	var peerinfoPath string
+	flag.StringVar(&peerinfoPath, "p", peerFilePath, "Peer info configuration file Path. Default to conf/peer_default.conf")
+	var ver bool
+	flag.BoolVar(&ver, "v", false, "display version")
 	flag.Parse()
 
-	logger.Infof("Genesis conf file is %v,node conf file is %v", genesisPath, filePath)
+	if ver {
+		println(version)
+		return
+	}
+
+	logger.Infof("Genesis conf file is %v,node conf file is %v,peer info conf file is %v", genesisPath, filePath, peerinfoPath)
+
+	// logger.Infof("Genesis conf file is %v,node conf file is %v", genesisPath, filePath)
 	//load genesis file information
 	genesisConf := &configpb.DynastyConfig{}
 	config.LoadConfig(genesisPath, genesisConf)
@@ -95,11 +111,13 @@ func main() {
 		logger.Error("Cannot load configurations from file! Exiting...")
 		return
 	}
+	peerinfoPath = peerConfDirPath + peerinfoPath
+	peerinfoConf := storage.NewFileLoader(peerinfoPath)
 
 	//setup
 	db := storage.OpenDatabase(conf.GetNodeConfig().GetDbPath())
 	defer db.Close()
-	node, err := initNode(conf, db)
+	node, err := initNode(conf, peerinfoConf)
 	if err != nil {
 		return
 	} else {
@@ -156,7 +174,7 @@ func main() {
 	bm.RequestDownloadBlockchain()
 
 	minerSubsidy := viper.GetInt("log.minerSubsidy")
-	if minerSubsidy == 0{
+	if minerSubsidy == 0 {
 		minerSubsidy = 1000000000
 	}
 	transaction.SetSubsidy(minerSubsidy)
@@ -184,14 +202,14 @@ func initConsensus(conf *configpb.DynastyConfig, generalConf *configpb.Config) (
 	return conss, dynasty
 }
 
-func initNode(conf *configpb.Config, db storage.Storage) (*network.Node, error) {
+func initNode(conf *configpb.Config, peerinfoConf *storage.FileLoader) (*network.Node, error) {
 
 	nodeConfig := conf.GetNodeConfig()
 	seeds := nodeConfig.GetSeed()
 	port := nodeConfig.GetPort()
 	key := nodeConfig.GetKey()
 
-	node := network.NewNode(db, seeds)
+	node := network.NewNode(peerinfoConf, seeds)
 	err := node.Start(int(port), key)
 	if err != nil {
 		logger.Error(err)
