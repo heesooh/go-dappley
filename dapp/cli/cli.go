@@ -364,7 +364,6 @@ var cmdHandlers = map[string]commandHandlersWithType{
 	cliGetMetricsInfo:    {metricsRpcService, getMetricsInfoCommandHandler},
 	cliGetBlockByHeight:  {rpcService, getBlockByHeightCommandHandler},
 	cliGenerateSeed:      {adminRpcService, generateSeedCommandHandler},
-
 	cliConfigGenerator: {adminRpcService, configGeneratorCommandHandler},
 }
 
